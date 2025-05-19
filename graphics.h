@@ -2,6 +2,9 @@
 #define GRAPHICS_H
 
 #include "globals.h"
+#include "enemy_manage.h"
+#include "player.h"
+#include "utilities.h"
 
 void draw_text(Text &text) {
     // Measure the text, center it to the required position, and draw it
@@ -20,7 +23,7 @@ void derive_graphics_metrics_from_loaded_level() {
     screen_size.x  = static_cast<float>(GetScreenWidth());
     screen_size.y = static_cast<float>(GetScreenHeight());
 
-    cell_size = screen_size.y / static_cast<float>(LEVELS[level_index].rows);
+    cell_size = screen_size.y / static_cast<float>(LevelManage::getInstanceLevel().get_levels()[level_index].get_rows());
     screen_scale = std::min(screen_size.x, screen_size.y) / SCREEN_SCALE_DIVISOR;
 
     // Parallax background setup
@@ -38,7 +41,7 @@ void derive_graphics_metrics_from_loaded_level() {
 
 void draw_parallax_background() {
     // First uses the player's position
-    float initial_offset      = -(player_pos.x * PARALLAX_PLAYER_SCROLLING_SPEED + game_frame * PARALLAX_IDLE_SCROLLING_SPEED);
+    float initial_offset      = -(Player::getInstancePlayer().get_player_posX() * PARALLAX_PLAYER_SCROLLING_SPEED + game_frame * PARALLAX_IDLE_SCROLLING_SPEED);
 
     // Calculate offsets for different layers
     float background_offset   = initial_offset;
@@ -81,98 +84,15 @@ void draw_game_overlay() {
 
     // Timer
     Vector2 timer_dimensions = MeasureTextEx(menu_font, std::to_string(timer / 60).c_str(), ICON_SIZE, 2.0f);
-    Vector2 timer_position = {(GetRenderWidth() - timer_dimensions.x) * 0.5f, slight_vertical_offset};
+    Vector2 timer_position = {(GetRenderWidth() - timer_dimensions.x) * 0.23f, slight_vertical_offset};
     DrawTextEx(menu_font, std::to_string(timer / 60).c_str(), timer_position, ICON_SIZE, 2.0f, WHITE);
-
-    // Score
-    Vector2 score_dimensions = MeasureTextEx(menu_font, std::to_string(get_total_player_score()).c_str(), ICON_SIZE, 2.0f);
-    Vector2 score_position = {GetRenderWidth() - score_dimensions.x - ICON_SIZE, slight_vertical_offset};
-    DrawTextEx(menu_font, std::to_string(get_total_player_score()).c_str(), score_position, ICON_SIZE, 2.0f, WHITE);
-    draw_sprite(coin_sprite, {GetRenderWidth() - ICON_SIZE, slight_vertical_offset}, ICON_SIZE);
+// Score
+    Vector2 score_dimensions = MeasureTextEx(menu_font, std::to_string(Player::getInstancePlayer().get_total_player_score()).c_str(), ICON_SIZE, 2.0f);
+    Vector2 score_position = {955, slight_vertical_offset};
+    DrawTextEx(menu_font, std::to_string(Player::getInstancePlayer().get_total_player_score()).c_str(), score_position, ICON_SIZE, 2.0f, WHITE);
+    draw_sprite(coin_sprite, {925, slight_vertical_offset}, ICON_SIZE);
 }
 
-void draw_level() {
-    // Move the x-axis' center to the middle of the screen
-    horizontal_shift = (screen_size.x - cell_size) / 2;
-
-    for (size_t row = 0; row < current_level.rows; ++row) {
-        for (size_t column = 0; column < current_level.columns; ++column) {
-
-            Vector2 pos = {
-                    // Move the level to the left as the player advances to the right,
-                    // shifting to the left to allow the player to be centered later
-                    (static_cast<float>(column) - player_pos.x) * cell_size + horizontal_shift,
-                    static_cast<float>(row) * cell_size
-            };
-
-            // Draw the level itself
-            char cell = get_level_cell(row, column);
-            switch (cell) {
-                case WALL:
-                    draw_image(wall_image, pos, cell_size);
-                    break;
-                case WALL_DARK:
-                    draw_image(wall_dark_image, pos, cell_size);
-                    break;
-                case SPIKE:
-                    draw_image(spike_image, pos, cell_size);
-                    break;
-                case COIN:
-                    draw_sprite(coin_sprite, pos, cell_size);
-                    break;
-                case EXIT:
-                    draw_image(exit_image, pos, cell_size);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
-    draw_player();
-    draw_enemies();
-}
-
-void draw_player() {
-    horizontal_shift = (screen_size.x - cell_size) / 2;
-
-    // Shift the camera to the center of the screen to allow to see what is in front of the player
-    Vector2 pos = {
-            horizontal_shift,
-            player_pos.y * cell_size
-    };
-
-    // Pick an appropriate sprite for the player
-    if (game_state == GAME_STATE) {
-        if (!is_player_on_ground) {
-            draw_image((is_looking_forward ? player_jump_forward_image : player_jump_backwards_image), pos, cell_size);
-        }
-        else if (is_moving) {
-            draw_sprite((is_looking_forward ? player_walk_forward_sprite : player_walk_backwards_sprite), pos, cell_size);
-            is_moving = false;
-        }
-        else {
-            draw_image((is_looking_forward ? player_stand_forward_image : player_stand_backwards_image), pos, cell_size);
-        }
-    }
-    else {
-        draw_image(player_dead_image, pos, cell_size);
-    }
-}
-
-void draw_enemies() {
-    // Go over all enemies and draw them, once again accounting to the player's movement and horizontal shift
-    for (auto &enemy : enemies) {
-        horizontal_shift = (screen_size.x - cell_size) / 2;
-
-        Vector2 pos = {
-                (enemy.pos.x - player_pos.x) * cell_size + horizontal_shift,
-                enemy.pos.y * cell_size
-        };
-
-        draw_sprite(enemy_walk, pos, cell_size);
-    }
-}
 
 // Menus
 void draw_menu() {
@@ -186,7 +106,7 @@ void draw_pause_menu() {
 
 void draw_death_screen() {
     draw_parallax_background();
-    draw_level();
+    LevelManage::getInstanceLevel().draw_level();
     draw_game_overlay();
     DrawRectangle(0, 0, GetRenderWidth(), GetRenderHeight(), {0, 0, 0, 100});
     draw_text(death_title);
@@ -254,6 +174,8 @@ void draw_victory_menu() {
 
     draw_text(victory_title);
     draw_text(victory_subtitle);
-}
+
+
+    }
 
 #endif //GRAPHICS_H
