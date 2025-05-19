@@ -163,19 +163,33 @@ void draw_victory_menu_background() {
 }
 
 void draw_victory_menu() {
-    DrawRectangle(
-        0, 0,
-        static_cast<int>(screen_size.x), static_cast<int>(screen_size.y),
-        { 0, 0, 0, VICTORY_BALL_TRAIL_TRANSPARENCY }
-    );
+
+    Color lgbt_colors[6] = {
+        { 228,  3,  3, 255 },   // Красный
+        { 255, 140, 0, 255 },   // Оранжевый
+        { 255, 237, 0, 255 },   // Жёлтый
+        { 0,   128, 38, 255 },  // Зелёный
+        { 0,    77, 255, 255 }, // Синий
+        { 117,  7, 135, 255 }   // Фиолетовый
+    };
+
+    float stripe_height = screen_size.y / 6.0f;
+
+    for (int i = 0; i < 6; ++i) {
+        DrawRectangle(
+            0,
+            static_cast<int>(i * stripe_height),
+            static_cast<int>(screen_size.x),
+            static_cast<int>(stripe_height),
+            lgbt_colors[i]
+        );
+    }
 
     animate_victory_menu_background();
     draw_victory_menu_background();
 
     draw_text(victory_title);
     draw_text(victory_subtitle);
-
-
-    }
+}
 
 #endif //GRAPHICS_H

@@ -105,7 +105,7 @@ inline int time_to_coin_counter = 0;
 /* Physics constants */
 
 inline const float PLAYER_MOVEMENT_SPEED = 0.1f;
-inline const float JUMP_STRENGTH         = 0.35f;
+inline const float JUMP_STRENGTH         = 0.5f;
 inline const float CEILING_BOUNCE_OFF    = 0.05f;
 inline const float ENEMY_MOVEMENT_SPEED  = 0.07f;
 inline const float BOUNCE_OFF_ENEMY      = 0.1f;
@@ -117,7 +117,7 @@ inline float player_y_velocity = 0;
 
 inline int player_level_scores[LEVEL_COUNT];
 
-inline const int MAX_PLAYER_LIVES = 3;
+inline const int MAX_PLAYER_LIVES = 10;
 inline int player_lives = MAX_PLAYER_LIVES;
 
 
